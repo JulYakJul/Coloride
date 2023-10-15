@@ -1,0 +1,173 @@
+using UnityEngine;
+using UnityEngine.UI;
+
+public class GameManager : MonoBehaviour
+{
+    public Transform targetCircle;
+    public SquareSelectionButton[] optionSquares;
+    public TMPro.TextMeshProUGUI scoreText;
+
+    public int score = 0;
+    public bool gameOver = false;
+
+    void Start()
+    {
+        UpdateGame();
+    }
+
+    public void UpdateGame()
+    {
+        // Генерируем новый цвет для круга
+        Color targetColor = GenerateRandomColor();
+        targetCircle.GetComponent<Renderer>().material.color = targetColor;
+
+        // Генерируем новые цвета для квадратов
+        Color[] squareColors = GenerateSquareColors(targetColor, optionSquares.Length);
+
+        // Устанавливаем цвета квадратов
+        for (int i = 0; i < optionSquares.Length; i++)
+        {
+            optionSquares[i].SetSquareColor(squareColors[i]);
+        }
+
+        // Выбираем случайный индекс для правильного варианта
+        int correctIndex = Random.Range(0, optionSquares.Length);
+
+        // Устанавливаем правильный цвет на кнопке
+        optionSquares[correctIndex].SetSquareColor(targetColor);
+    }
+
+    Color[] GenerateSquareColors(Color targetColor, int count)
+    {
+        Color[] colors = new Color[count];
+
+        for (int i = 0; i < count; i++)
+        {
+            // Генерируем цвет, который максимально похож на цвет круга
+            colors[i] = GenerateSimilarColor(targetColor);
+        }
+
+        return colors;
+    }
+
+    Color GenerateSimilarColor(Color targetColor)
+    {
+        float r = Random.Range(targetColor.r - 0.1f, targetColor.r + 0.1f);
+        float g = Random.Range(targetColor.g - 0.1f, targetColor.g + 0.1f);
+        float b = Random.Range(targetColor.b - 0.1f, targetColor.b + 0.1f);
+
+        // Ограничиваем значения в пределах 0 и 1
+        r = Mathf.Clamp01(r);
+        g = Mathf.Clamp01(g);
+        b = Mathf.Clamp01(b);
+
+        return new Color(r, g, b);
+    }
+
+
+    Color GenerateRandomColor()
+    {
+        float r = Random.Range(0f, 1f);
+        float g = Random.Range(0f, 1f);
+        float b = Random.Range(0f, 1f);
+        return new Color(r, g, b);
+    }
+
+    Color[] GenerateRandomColors(int count)
+    {
+        Color[] colors = new Color[count];
+        for (int i = 0; i < count; i++)
+        {
+            colors[i] = GenerateRandomColor();
+        }
+        return colors;
+    }
+
+    public void IncreaseScore()
+    {
+        score++;
+        Debug.Log("Верно!");
+        UpdateGame();
+    }
+
+    public void GameOver()
+    {
+        Debug.Log("Неверно!");
+        // Дополнительные действия при завершении игры
+        // Например, можно здесь отключить кнопки вариантов выбора, чтобы игрок не мог продолжать
+    }
+}
+
+using UnityEngine;
+using UnityEngine.UI;
+
+public class SquareSelectionButton : MonoBehaviour
+{
+    public GameManager gameManager; // Ссылка на GameManager
+    private Image image;
+
+    private Button button;
+    private bool isClickable = true;
+
+    private void Start()
+    {
+        image = GetComponent<Image>();
+        button = GetComponent<Button>();
+        button.onClick.AddListener(OnClick);
+    }
+
+    public void SetSquareColor(Color color)
+    {
+        image.color = color;
+    }
+
+    private void OnClick()
+    {
+        if (isClickable && !gameManager.gameOver)
+        {
+            // Получите цвет квадрата из кнопки при каждом клике
+            Color squareColor = image.color;
+            Color targetColor = gameManager.targetCircle.GetComponent<Renderer>().material.color;
+
+            if (ColorMatches(squareColor, targetColor))
+            {
+                // Игрок выбрал правильный цвет
+                gameManager.IncreaseScore();
+                Debug.Log("Верно!");
+            }
+            else
+            {
+                // Игрок выбрал неправильный цвет
+                Debug.Log("Неверно!");
+                gameManager.GameOver();
+            }
+
+            // Обновляем цель и варианты цветов
+            gameManager.UpdateGame();
+
+            // После обновления цветов, перезапускаем кнопку
+            ResetButton();
+
+            Debug.Log("Square Color: " + squareColor);
+            Debug.Log("Target Color: " + targetColor);
+        }
+    }
+
+    private bool ColorMatches(Color colorA, Color colorB)
+    {
+        float threshold = 0.01f;
+
+        bool redMatches = Mathf.Abs(colorA.r - colorB.r) <= threshold;
+        bool greenMatches = Mathf.Abs(colorA.g - colorB.g) <= threshold;
+        bool blueMatches = Mathf.Abs(colorA.b - colorB.b) <= threshold;
+
+        return redMatches && greenMatches && blueMatches;
+    }
+
+    public void ResetButton()
+    {
+        isClickable = true;
+        button.interactable = true;
+    }
+}
+
