@@ -1,30 +1,33 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GameManager : MonoBehaviour
+public class GameManagerModeTone : MonoBehaviour
 {
     public Transform targetCircle;
-    public SquareSelectionButton[] optionSquares;
+    public SquareSelectionButtonModeTone[] optionSquares;
     public TMPro.TextMeshProUGUI scoreText;
     public TMPro.TextMeshProUGUI scoreGameOverText;
 
-    public ColorSelectionTimer colorSelectionTimer;
+    public ColorSelectionTimerModeTone colorSelectionTimer;
 
     public int score = 0;
     public bool gameOver = false;
 
     public float levelColor = 1f;
 
-    private int numberOfOptions = 2;
-
+    private int numberOfOptions = 6;
     private Color initialTargetColor;
+
+    private float hue;
 
     void Start()
     {
         initialTargetColor = GenerateRandomColor();
         targetCircle.GetComponent<Renderer>().material.color = initialTargetColor;
 
-        Color[] initialSquareColors = GenerateRandomColors(optionSquares.Length, levelColor);
+        hue = Random.Range(0f, 1f);
+
+        Color[] initialSquareColors = GenerateGradientColors(optionSquares.Length, hue, numberOfOptions);
 
         for (int i = 0; i < optionSquares.Length; i++)
         {
@@ -52,7 +55,9 @@ public class GameManager : MonoBehaviour
         Color targetColor = GenerateRandomColor();
         targetCircle.GetComponent<Renderer>().material.color = targetColor;
 
-        Color[] squareColors = GenerateSquareColors(targetColor, optionSquares.Length, levelColor);
+        hue = (hue + 0.2f) % 1f; 
+
+        Color[] squareColors = GenerateGradientColors(optionSquares.Length, hue, numberOfOptions);
 
         for (int i = 0; i < optionSquares.Length; i++)
         {
@@ -72,33 +77,34 @@ public class GameManager : MonoBehaviour
         optionSquares[correctIndex].SetSquareColor(targetColor);
     }
 
-    Color[] GenerateSquareColors(Color targetColor, int count, float currentLevelColor)
+    Color[] GenerateSquareColors(float hue, int count, int numberOfOptions)
     {
         Color[] colors = new Color[count];
 
         for (int i = 0; i < count; i++)
         {
-            colors[i] = GenerateSimilarColor(targetColor, currentLevelColor);
+            float saturation = 1f;
+            float value = (float)(i + 1) / (float)(numberOfOptions);
+
+            colors[i] = Color.HSVToRGB(hue, saturation, value);
         }
 
         return colors;
     }
 
-    Color GenerateSimilarColor(Color targetColor, float currentLevelColor)
+    Color[] GenerateGradientColors(int count, float hue, int numberOfOptions)
     {
-        float rRange = Mathf.Clamp01(Random.Range(0.0f, currentLevelColor));
-        float gRange = Mathf.Clamp01(Random.Range(0.0f, currentLevelColor));
-        float bRange = Mathf.Clamp01(Random.Range(0.0f, currentLevelColor));
+        Color[] colors = new Color[count];
 
-        float r = Random.Range(targetColor.r - rRange, targetColor.r + rRange);
-        float g = Random.Range(targetColor.g - gRange, targetColor.g + gRange);
-        float b = Random.Range(targetColor.b - bRange, targetColor.b + bRange);
+        for (int i = 0; i < count; i++)
+        {
+            float saturation = 1f; 
+            float value = (float)(i + 1) / (float)(numberOfOptions);
 
-        r = Mathf.Clamp01(r);
-        g = Mathf.Clamp01(g);
-        b = Mathf.Clamp01(b);
+            colors[i] = Color.HSVToRGB(hue, saturation, value);
+        }
 
-        return new Color(r, g, b);
+        return colors;
     }
 
     public void IncreaseScore()
@@ -133,16 +139,6 @@ public class GameManager : MonoBehaviour
         float g = Random.Range(0f, 1f);
         float b = Random.Range(0f, 1f);
         return new Color(r, g, b);
-    }
-
-    Color[] GenerateRandomColors(int count, float currentLevelColor)
-    {
-        Color[] colors = new Color[count];
-        for (int i = 0; i < count; i++)
-        {
-            colors[i] = GenerateRandomColor();
-        }
-        return colors;
     }
 
     public void GameOver()
