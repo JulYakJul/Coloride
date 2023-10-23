@@ -17,6 +17,8 @@ public class BackButton : MonoBehaviour
         if (menuAnimator != null)
         {
             menuAnimator.SetBool("IsBackToMenuPressed", true);
+            menuAnimator.SetBool("IsSettingsPressed", false);
+            menuAnimator.SetBool("IsPlayPressed", false);
         }
     }
 }
